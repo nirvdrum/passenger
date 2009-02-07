@@ -34,6 +34,7 @@
 // compilation will fail on OpenBSD.
 #include <httpd.h>
 #include <http_core.h>
+#include <http_request.h>	/* for ap_sub_req_lookup_uri() */
 
 namespace Passenger {
 
@@ -224,6 +225,20 @@ public:
 			if (strcmp(baseURI, "/") != 0) {
 				path.append(baseURI);
 			}
+
+      /* If the publicDirectory doesn't exist, this may be an Alias'd path. */
+			const char* publicDirectory = realpath(path.c_str(), NULL);
+			if (NULL == publicDirectory) {
+        /* For mod_alias support we do a sub-request for the BaseURI.
+         * That filename (Alias should be to Rails app's 'public' directory) would
+         * be the physical location of 'public'.
+         */
+        request_rec *sub_req;
+        sub_req = ap_sub_req_lookup_uri(baseURI, r, NULL);
+        
+        return sub_req->filename;
+			}
+
 			return path;
 		} else {
 			return "";

@@ -358,6 +358,37 @@ describe "mod_passenger running in Apache 2" do
 		end
 	end
 	
+	describe ": MyCook(tm) beta running in a sub-URI via mod_alias" do
+		before :all do
+			@stub = setup_rails_stub('mycook')
+			FileUtils.rm_rf('tmp.webdir')
+			FileUtils.mkdir_p('tmp.webdir')
+			FileUtils.cp_r('stub/zsfa/.', 'tmp.webdir')
+
+			@apache2.set_vhost('passenger.test', File.expand_path('tmp.webdir')) do |vhost|
+			  vhost << "Alias /mycook #{File.expand_path(@stub.app_root)}/public"
+				vhost << "RailsBaseURI /mycook"
+			end
+			@apache2.start
+		end
+		
+		after :all do
+			FileUtils.rm_rf('tmp.webdir')
+			@stub.destroy
+		end
+		
+		before :each do
+			@server = "http://passenger.test:#{@apache2.port}/mycook"
+		end
+		
+		it_should_behave_like "MyCook(tm) beta"
+		
+		it "does not interfere with the root website" do
+			@server = "http://passenger.test:#{@apache2.port}"
+			get('/').should =~ /Zed, you rock\!/
+		end
+	end
+	
 	describe "configuration options" do
 		before :all do
 			@apache2 << "PassengerMaxPoolSize 3"

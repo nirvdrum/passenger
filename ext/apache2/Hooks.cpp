@@ -441,7 +441,7 @@ private:
 				/* The application root cannot be determined. This could
 				 * happen if, for example, the user specified 'RailsBaseURI /foo'
 				 * while there is no filesystem entry called "foo" in the virtual
-				 * host's document root.
+				 * host's document root and no alias for "/foo" to a filesystem path.
 				 */
 				return ReportFileSystemError(e).report(r);
 			} catch (const BusyException &e) {
